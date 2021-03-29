@@ -105,7 +105,7 @@ any border."
                                `(:inherit default
                                  :foreground ,(face-foreground 'tooltip)
                                  :background ,(face-background 'tooltip))))
-             (eol (save-excursion (goto-char pos) (end-of-visual-line) (point)))
+             (eol (racket--eol pos))
              (ov (make-overlay eol (1+ eol))))
         (overlay-put ov 'after-string text)
         (list ov))
@@ -120,14 +120,14 @@ any border."
                                  :background ,(face-background 'tooltip)
                                  :box (:line-width -1))))
          (text-len (length text))
-         (bol      (save-excursion (goto-char pos) (beginning-of-visual-line) (point)))
-         (eol      (save-excursion (goto-char pos) (end-of-visual-line) (point)))
+         (bol      (racket--bol pos))
+         (eol      (racket--eol pos))
          ;; Position the tooltip on the next line, indented to `pos'
          ;; -- but not so far it ends off right edge.
          (indent   (max 0 (min (- pos bol)
-                               (- (window-width) text-len 2))))
+                               (- (window-width) (string-width text) 2))))
          (beg      (+ eol indent 1))
-         (next-eol (save-excursion (goto-char (1+ eol)) (end-of-visual-line) (point))))
+         (next-eol (racket--eol (1+ eol))))
       ;; If the tip starts before next-eol, create an overlay with the
       ;; 'display property, covering the span of the tooltip text but
       ;; not beyond next-eol.
@@ -175,6 +175,24 @@ any border."
                (blanks (make-string (- beg next-eol) 32)))
           (overlay-put ov 'after-string (concat blanks text))
           (list ov))))))
+
+(defun racket--bol (pos)
+  "Given POS return line beginning position."
+  (save-excursion
+    (goto-char pos)
+    (if visual-line-mode
+        (beginning-of-visual-line)
+      (beginning-of-line))
+    (point)))
+
+(defun racket--eol (pos)
+  "Given POS return line ending position."
+  (save-excursion
+    (goto-char pos)
+    (if visual-line-mode
+        (end-of-visual-line)
+      (end-of-line))
+    (point)))
 
 (provide 'racket-show)
 
